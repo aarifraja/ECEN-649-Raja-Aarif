@@ -28,23 +28,21 @@ import numpy as np
 import os
 from PIL import Image
 from collections import defaultdict
-"""
-def int_img(img):
-    rows=img.shape[0]+1
-    cols=img.shape[1]+1
 
-    ii= np.zeros((rows,cols))
-    s = np.zeros((rows,cols))
-    for x in range(rows-1):
-        for y in range(cols-1):
-            s[x, y+1] = s[x, y] + img[x, y]
-    
-    for y in range(cols-1):
-        for x in range(rows-1):
-            ii[x+1, y+1] = ii[x, y+1] + s[x+1, y+1]
-    return ii
 
-"""
+
+
+
+def rect_area(ii,x,y,w,h):
+    if w==0 and h==0:
+        return ii(x,y)
+    a=(x,y)
+    b=(x+w,y)
+    c=(x,y+h)
+    d=(x+w,y+h)
+
+    return ii[d]-ii[b] -ii[c]+ ii[a]
+	
 
 def int_img(img_arr):
     """
@@ -66,35 +64,6 @@ def int_img(img_arr):
             integral_image_arr[y+1, x+1] = integral_image_arr[y+1, x-1+1] + row_sum[y, x]
     return integral_image_arr
 
-'''
-def int_img(image):
-    s = np.zeros((image.shape[0],image.shape[1]))
-    integral = np.zeros((image.shape[0],image.shape[1]))
-    for i in range(len(image)):
-        for j in range(len(image[0])):
-            if(i-1 >=0):
-                s[i][j] = s[i-1][j] + image[i][j]
-            else:
-                s[i][j] = image[i][j]
-            if(j-1 >=0):
-                integral[i][j] = integral[i][j-1] + s[i][j]
-            else:
-                integral[i][j] = s[i][j]
-            
-    return integral
-
-
-'''
-
-def rect_area(ii,x,y,w,h):
-    if w==0 and h==0:
-        return ii(x,y)
-    a=(x,y)
-    b=(x+w,y)
-    c=(x,y+h)
-    d=(x+w,y+h)
-
-    return ii[d]-ii[b] -ii[c]+ ii[a]
 
 
 
