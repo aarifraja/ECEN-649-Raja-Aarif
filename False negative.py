@@ -1,38 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Dec  9 09:24:12 2019
-
-@author: arifr
-"""
-
-
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Dec  9 08:08:01 2019
-
-@author: arifr
-"""
-
-
-
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Dec  8 21:26:49 2019
-
-@author: arifr
-"""
-
-
-
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Dec  6 13:18:40 2019
-
-@author: arifr
-"""
-
-
-
 
 # -*- coding: utf-8 -*-
 """
@@ -47,6 +12,16 @@ from PIL import Image
 from collections import defaultdict
 
 
+def int_img(img_arr):
+
+
+    ii = np.zeros((img_arr.shape[0] + 1, img_arr.shape[1] + 1))
+    row_sum = np.zeros(img_arr.shape)
+    for x in range(img_arr.shape[1]):
+        for y in range(img_arr.shape[0]):
+            row_sum[y, x] = row_sum[y-1, x] + img_arr[y, x]
+            ii[y+1, x+1] = ii[y+1, x-1+1] + row_sum[y, x]
+    return ii
 
 
 
@@ -60,27 +35,6 @@ def rect_area(ii,x,y,w,h):
     d=(x+w,y+h)
 
     return ii[d]-ii[b] -ii[c]+ ii[a]
-
-
-def int_img(img_arr):
-    """
-    Calculates the integral image based on this instance's original image data.
-    :param img_arr: Image source data
-    :type img_arr: numpy.ndarray
-    :return Integral image for given image
-    :rtype: numpy.ndarray
-    """
-    # an index of -1 refers to the last row/column
-    # since row_sum is calculated starting from (0,0),
-    # rowSum(x, -1) == 0 holds for all x
-    row_sum = np.zeros(img_arr.shape)
-    # we need an additional column and row
-    integral_image_arr = np.zeros((img_arr.shape[0] + 1, img_arr.shape[1] + 1))
-    for x in range(img_arr.shape[1]):
-        for y in range(img_arr.shape[0]):
-            row_sum[y, x] = row_sum[y-1, x] + img_arr[y, x]
-            integral_image_arr[y+1, x+1] = integral_image_arr[y+1, x-1+1] + row_sum[y, x]
-    return integral_image_arr
 
 
 
@@ -183,137 +137,7 @@ def im_arr(l):
             arr_im.append(arr)
     return arr_im
 
-'''
 
-def train(ft_arr,nft_arr):
-
-    
-    global labels
-    global fea_img
-    global train_res
-    global wts                              #new
-    global features  
-    
-
-    full_train= ft_arr+nft_arr
-    
-    
-    print len(features)
-    print "inside train function"
-
-    
-    classifiers=[]
-
-    
-    for i,img in enumerate(full_train):
-        for j,feature in enumerate(features):
-            fea_val=0
-            if feature[0]==1:
-                fea_val=f1_val(img,feature[1], feature[2],feature[3],feature[4])
-            elif feature[0]==2:
-                fea_val=f2_val(img,feature[1], feature[2],feature[3],feature[4])
-            elif feature[0]==3:
-                fea_val=f3_val(img,feature[1], feature[2],feature[3],feature[4])
-            elif feature[0]==4:
-                fea_val=f4_val(img,feature[1], feature[2],feature[3],feature[4])
-            elif feature[0]==5:
-                fea_val=f5_val(img,feature[1], feature[2],feature[3],feature[4])
-                
-            fea_img[j][i]=fea_val  # should be outside
-
-      
-
-    added_set=set()
-    res=[]
-    ans=[]
-    #global wts
-    seen_ee= set()
-    seen_fp= set()
-    seen_fn= set()
-    alphas=[]
-    
-    #fp_allf=[[0]*len(full_train) for i in range(len(features))]
-    #fn_allf=[[0]*len(full_train) for i in range(len(features))]
-    err_allf=[[0]*len(full_train) for i in range(len(features))]
-    
-    for k in range(1):
-        print "in adabooost " + str(k)+"  round"
-        errors= [0]*len(features)
-        tot = sum(wts)
-        wts=[i*(1./tot) for i in wts]
-        train_all(fea_img,wts)
-    
-   
-        
-        
-        
-        best_clf_ee, best_error_ee, best_accuracy_ee = None, float('inf'), None
-        #best_clf_fp, best_error_fp, best_accuracy_fp = None, float('inf'), None
-        #best_clf_fn, best_error_fn, best_accuracy_fn = None, float('inf'), None
-        for i in range(len(features)):
-
-            error, accuracy = 0, []
-            acc=0
-            false_positive=0
-            false_negative=0
-            for j in range(len(full_train)):
-                fp_for_oneim=0
-                fn_for_oneim=0
-                prediction=1 if fea_img[i][j]*ftp[features[i]][1]  < ftp[features[i]][0]*ftp[features[i]][1] else 0
-                if labels[j]==0 and prediction==1:
-                    fp_for_oneim=1
-                    false_positive+=1
-                    fp_allf[i][j]=fp_for_oneim*wts[j]
-                    
-                if labels[j]==1 and prediction==0:
-                    false_negative+=1
-                    fn_for_oneim=1
-                    fn_allf[i][j]=fn_for_oneim*wts[j]
-                    
-                if labels[j]!=prediction:
-                    err_allf[i][j]=wts[j]
-                  
-                #correctness=abs(prediction-labels[j])
-                #accuracy.append(correctness)
-                #error+=wts[j]*correctness
-                if prediction==labels[j]:
-                    acc+=1
-            #error=error/len(full_train)
-            error_ee= sum(err_allf[i]) if features[i] not in seen_ee else float('inf')
-            error_fp= sum(fp_allf[i])  if features[i] not in seen_fp else float('inf')
-            error_fn= sum(fn_allf[i]) if features[i] not in seen_fn else float('inf')
-            
-            if error_ee<best_error_ee:
-                best_clf_ee, best_error_ee, best_accuracy_ee,index_ee,accf_ee,fn_ee,fp_ee = features[i], error, accuracy,i,float(acc)/len(full_train),false_negative,false_positive
-            if error_fp<best_error_fp:
-                best_clf_fp, best_error_fp, best_accuracy_fp,index_fp,accf_fp,fn_fp,fp_fp = features[i], error, accuracy,i,float(acc)/len(full_train),false_negative,false_positive
-            if error_fn<best_error_fn:
-                best_clf_fn, best_error_fn, best_accuracy_fn,index_fn,accf_fn,fn_fn,fp_fn = features[i], error, accuracy,i,float(acc)/len(full_train),false_negative,false_positive
-        
-
-        
-        x=(best_clf_ee,accf_ee,index_ee,fp_ee,fn_ee)
-        y= (best_clf_fp,accf_fp,index_fp,fp_fp,fn_fp)
-        z= (best_clf_fn,accf_fn,index_fn,fp_fn,fn_fn)
-        
-        seen_ee.add(best_clf_ee)
-        seen_fp.add(best_clf_fp)
-        seen_fn.add(best_clf_fn)
-        print "p7"
-        e=best_error
-        beta= float(e)/(1- float(e))
-        for i,wt in enumerate(wts):
-            if accuracy[i]==0:
-                wts[i]= wts[i]*beta
-        print "printing beta"
-        print beta
-        alpha = math.log(1.0/beta)
-        ans.append((x,alpha,y,z))
-    
-    
-    return ans   
-
-'''
 
 def train(ft_arr,nft_arr):
 
@@ -362,16 +186,13 @@ def train(ft_arr,nft_arr):
         tot = sum(wts)
         wts=[i*(1./tot) for i in wts]
         print "printing wts"
-        #print wts
         train_all(fea_img,wts)
-
-
+        threshold=-35
         best_clf_ee, best_error_ee, best_accuracy_ee = None, float('inf'), None
         best_clf_fp, best_error_fp, best_accuracy_fp = None, float('inf'), None
 
         for i in range(len(features)):
             
-
             error, accuracy = 0, []
             acc=0
             false_positive=0
@@ -379,7 +200,7 @@ def train(ft_arr,nft_arr):
             for j in range(len(full_train)):
                 fp_for_oneim=0
                 fn_for_oneim=0
-                prediction=1 if fea_img[i][j] >-35 else -1
+                prediction=1 if fea_img[i][j] > threshold else -1
                 #prediction=1 if fea_img[i][j]*ftp[features[i]][1]  < ftp[features[i]][0]*ftp[features[i]][1] else -1
                 if labels[j]==-1 and prediction==1:
                     fp_for_oneim=1
@@ -429,7 +250,7 @@ def train(ft_arr,nft_arr):
         seen_fp.add(best_clf_ee)
         beta=0.2
         e=best_error_ee
-
+ 
         beta= float(e)/(1- float(e))
 
         print "best error in" + str(k) +"round =" , e 
@@ -441,6 +262,9 @@ def train(ft_arr,nft_arr):
 
         print "printing beta"
         print beta
+        print "c1,c2", c1,c2
+
+        beta= abs(beta)
 
         alpha = math.log(1.0/beta)
         
@@ -454,145 +278,7 @@ def train(ft_arr,nft_arr):
     return ans     
 
 
-'''
 
-def train_fp(ft_arr,nft_arr):
-    #global labels
-    #global fea_img
-    #global train_res
-    
-    global labels
-    global fea_img
-    global train_res
-    global wts                              #new
-    global features  
-    
-
-    
-    full_train= ft_arr+nft_arr
-    
-    #features=  features1_creation() + features2_creation() + features3_creation()+ features4_creation() + features5_creation()
-    print len(features)
-    print "p3"
-
-    
-    classifiers=[]
-    #fea_img=[[0]*len(full_train) for _ in range(len(features))]
-    
-    for i,img in enumerate(full_train):
-        for j,feature in enumerate(features):
-            fea_val=0
-            if feature[0]==1:
-                fea_val=f1_val(img,feature[1], feature[2],feature[3],feature[4])
-            elif feature[0]==2:
-                fea_val=f2_val(img,feature[1], feature[2],feature[3],feature[4])
-            elif feature[0]==3:
-                fea_val=f3_val(img,feature[1], feature[2],feature[3],feature[4])
-            elif feature[0]==4:
-                fea_val=f4_val(img,feature[1], feature[2],feature[3],feature[4])
-            elif feature[0]==5:
-                fea_val=f5_val(img,feature[1], feature[2],feature[3],feature[4])
-                
-            fea_img[j][i]=fea_val  # should be outside
-            
-
-    print "p3"        
-    clas_count=2
-    #wts=np.array(wts)
-    added_set=set()
-    res=[]
-    ans=[]
-    #global wts
-    #seen_ee= set()
-    seen_fp= set()
-    #seen_fn= set()
-    alphas=[]
-    fp_allf=[[0]*len(full_train) for i in range(len(features))]
-    #fn_allf=[[0]*len(full_train) for i in range(len(features))]
-    #err_allf=[[0]*len(full_train) for i in range(len(features))]
-    
-    for k in range(5):
-        print "p4"
-        errors= [0]*len(features)
-        tot = sum(wts)
-        wts=[i*(1./tot) for i in wts]
-        train_all(fea_img,wts)
-        print "p6"
-
-        
-        
-        
-        #best_clf_ee, best_error_ee, best_accuracy_ee = None, float('inf'), None
-        best_clf_fp, best_error_fp, best_accuracy_fp = None, float('inf'), None
-        #best_clf_fn, best_error_fn, best_accuracy_fn = None, float('inf'), None
-        for i in range(len(features)):
-            #if features[i] in seen:
-            #   continue
-            error, accuracy = 0, []
-            acc=0
-            false_positive=0
-            false_negative=0
-            for j in range(len(full_train)):
-                fp_for_oneim=0
-                fn_for_oneim=0
-                prediction=1 if fea_img[i][j]*ftp[features[i]][1]  < ftp[features[i]][0]*ftp[features[i]][1] else 0
-                if labels[j]==0 and prediction==1:
-                    fp_for_oneim=1
-                    false_positive+=1
-                    fp_allf[i][j]=fp_for_oneim*wts[j]
-                    
-                #if labels[j]==1 and prediction==0:
-                    #false_negative+=1
-                    #fn_for_oneim=1
-                    #fn_allf[i][j]=fn_for_oneim*wts[j]
-                    
-                #if labels[j]!=prediction:
-                #    err_allf[i][j]=wts[j]
-                  
-                correctness=abs(prediction-labels[j])
-                accuracy.append(correctness)
-                #error+=wts[j]*correctness
-                if prediction==labels[j]:
-                    acc+=1
-            #error=error/len(full_train)
-            #error_ee= sum(err_allf[i]) if features[i] not in seen_ee else float('inf')
-            error_fp= sum(fp_allf[i])  if features[i] not in seen_fp else float('inf')
-            #error_fn= sum(fn_allf[i]) if features[i] not in seen_fn else float('inf')
-            
-            #if error_ee<best_error_ee:
-            #    best_clf_ee, best_error_ee, best_accuracy_ee,index_ee,accf_ee,fn_ee,fp_ee = features[i], error, accuracy,i,float(acc)/len(full_train),false_negative,false_positive
-            if error_fp<best_error_fp:
-                best_clf_fp, best_error_fp, best_accuracy_fp,index_fp,accf_fp,fn_fp,fp_fp = features[i], error, accuracy,i,float(acc)/len(full_train),false_negative,false_positive
-            #if error_fn<best_error_fn:
-            #    best_clf_fn, best_error_fn, best_accuracy_fn,index_fn,accf_fn,fn_fn,fp_fn = features[i], error, accuracy,i,float(acc)/len(full_train),false_negative,false_positive
-        
-
-        
-        #x=(best_clf_ee,accf_ee,index_ee,fp_ee,fn_ee)
-        y= (best_clf_fp,accf_fp,index_fp,fp_fp,fn_fp)
-        #z= (best_clf_fn,accf_fn,index_fn,fp_fn,fn_fn)
-        
-        #seen_ee.add(best_clf_ee)
-        seen_fp.add(best_clf_fp)
-        #seen_fn.add(best_clf_fn)
-        print "p7"
-        e=best_error_fp
-        print e
-        beta= float(e)/(1- float(e)) + 0.0002  ##REMOVE ----------------THIS 
-        for i,wt in enumerate(wts):
-            if accuracy[i]==0:
-                wts[i]= wts[i]*beta
-        print "printing beta"
-        print beta
-        alpha = math.log(1.0/beta)
-        ans.append((y,alpha))
-    
-    
-    return ans     
-    
-
-        
-'''
 
 
 clas_list=[]
@@ -645,8 +331,8 @@ def train_all(fea_img,wts):
 #nonfaces_train = 'C:\\Users\\arifr\\.spyder\\violajones\\dataset\\trainset-copy\\non-faces'
 
 
-faces_train = 'C:\\Users\\arifr\\.spyder\\violajones\\dataset\\trainset\\faces'
-nonfaces_train = 'C:\\Users\\arifr\\.spyder\\violajones\\dataset\\trainset\\non-faces'
+faces_train = 'C:\\Users\\rupimanoj\\Documents\\corret\\dataset\\trainset\\faces'
+nonfaces_train = 'C:\\Users\\rupimanoj\\Documents\\corret\\dataset\\trainset\\non-faces'
 
 ft=[]
 for pic in os.listdir(faces_train):
@@ -731,7 +417,7 @@ sc_fn=0
 for j,img in enumerate(z):
     cp=0
     alpha_sum=0
-    
+    threshold=-35
     
     for x  in strong_clas:
         alpha=x[1]
@@ -739,7 +425,7 @@ for j,img in enumerate(z):
         feature ,ac,i,fp,fn = x[0][0],x[0][1],x[0][2], x[0][3], x[0][4]
         
         #prediction=1 if fea_img[i][j]*ftp[features[i]][1]  < ftp[features[i]][0]*ftp[features[i]][1] else -1
-        prediction=1 if fea_img[i][j] >-35 else -1
+        prediction=1 if fea_img[i][j] >threshold  else -1
         cp+= alpha*prediction
         
         alpha_sum+=alpha
@@ -835,8 +521,8 @@ print float(accu)/len(z), float(sc_fp)/len(z),float(sc_fn)/len(z)
 #nonfaces_test = 'C:\\Users\\arifr\\.spyder\\violajones\\dataset\\testset-copy\\non-faces'
 
 
-faces_test = 'C:\\Users\\arifr\\.spyder\\violajones\\dataset\\testset\\faces' 
-nonfaces_test = 'C:\\Users\\arifr\\.spyder\\violajones\\dataset\\testset\\non-faces'
+faces_test = 'C:\\Users\\rupimanoj\\Documents\\corret\\dataset\\testset\\faces'
+nonfaces_test = 'C:\\Users\\rupimanoj\\Documents\\corret\\dataset\\testset\\non-faces'
 
 
 
@@ -919,9 +605,8 @@ z1=ftest_int_arr+nftest_int_arr
 
 sc_fp=0
 sc_fn=0
-for j,img in enumerate(z1):
-    
-    
+threshold =-35
+for j,img in enumerate(z1):      
     cp=0
     alpha_sum=0
     
@@ -930,7 +615,7 @@ for j,img in enumerate(z1):
         alpha=x[1]
         
         feature ,ac,i,fp,fn = x[0][0],x[0][1],x[0][2], x[0][3], x[0][4]
-        prediction=1 if featest_img[i][j] >-35 else -1
+        prediction=1 if featest_img[i][j] > threshold else -1
         
         #prediction=1 if featest_img[i][j]*ftp[features[i]][1]  < ftp[features[i]][0]*ftp[features[i]][1] else -1
         cp+= alpha*prediction
@@ -946,7 +631,7 @@ for j,img in enumerate(z1):
     if strong_predict==-1 and test_labels[j]==1:
         sc_fn+=1
 
-print "final testing_Ee  accuracy,false pos, false_neg"
+print "final  accuracy   accuracy,false pos, false_neg"
 print float(accu)/len(z1), float(sc_fp)/len(z1), float(sc_fn)/len(z1)
 '''
 accu=0
