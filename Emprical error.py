@@ -370,7 +370,7 @@ print "Features are applied on the images"
 
 print "calling the function for adaboost to pick the strong classifier "
 
-number_of_classifiers= 3
+number_of_classifiers= 1
 
 strong_clas= train(ft_int_arr,nft_int_arr,number_of_classifiers)
 
